@@ -2,8 +2,7 @@
 float pxs;
 //--------------------------------------------------------------
 void ofApp::setup(){
-    
-    
+
 #ifdef TARGET_OPENGLES
 	shader.load("shadersES2/shader");
     cout << "test???" << "\n";
@@ -46,30 +45,28 @@ void ofApp::setup(){
     
     //AUDIO
     soundStream.printDeviceList();
-    ofSetDepthTest(false);
 
-    
+
     left.assign(bufferSize, 0.0);
     right.assign(bufferSize, 0.0);
     
     soundStream.setup(this, 0, 2, 44100, bufferSize, 4);
     
+    //Basic Setup
     ofSetFrameRate(60);
     ofSetVerticalSync(true);
-    //ofSetDepthTest(true);
-    
-    model.loadModel("building12.obj");
-    model.setPosition(ofGetWidth()/2, ofGetHeight()/2, 0.0f);
-    ofLoadImage(myTexture, "test2.jpg");
-   // ofDisableArbTex();
-   // ofEnableDepthTest();
-    
+    ofDisableArbTex();
+    ofSetDepthTest(false);
     
 
+    model.loadModel("building12.obj",false);
+//    model.setPosition(ofGetWidth() * 0.5, (float)ofGetHeight() * 0.75 , 0);
+    ofLoadImage(myTexture, "test2.jpg");
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
+    model.update();
     
     float p = 0;
     float high = 0;
@@ -284,7 +281,13 @@ void ofApp::draw(){
     fbo4.begin();*/
     
     if(pressed ==1){
-        shader2.begin();
+        ofEnableBlendMode(OF_BLENDMODE_ALPHA);
+        ofEnableDepthTest();
+        
+        light.enable();
+        ofEnableSeparateSpecularLight();
+
+        shader.begin();
         ofSetColor(255);
         ofBackground(255, 255, 255);
         
@@ -292,12 +295,18 @@ void ofApp::draw(){
         fboBlurTwoPass.clear();
         fboBlurThreePass.clear();
         //ofTranslate(ofGetMouseX(), ofGetMouseY());
-        shader2.setUniformTexture("colormap", img2, 2);
-        shader2.setUniform1f("maxHeight", mouseX);
-        model.drawWireframe();
+        shader.setUniformTexture("colormap", img2, 2);
+        shader.setUniform1f("maxHeight", mouseX);
+        
+        ofPushMatrix();
+        ofTranslate(mouseX,mouseY);
+        model.drawFaces();
+        ofPopMatrix();
+
         //model.draw(ofPolyRenderMode::OF_MESH_FILL);
-        //sphere.drawWireframe();
-        shader2.end();
+        ofDisableDepthTest();
+//        model.drawWireframe();
+        shader.end();
         //fbo4.end();
         
         
@@ -331,11 +340,10 @@ void ofApp::keyPressed(int key){
         ofSetFrameRate(60);
         ofSetVerticalSync(true);
         ofSetDepthTest(true);
-        model.enableColors();
-        model.enableTextures();
-        model.enableTextures();
+//        model.enableColors();
+//        model.enableTextures();
+//        model.enableTextures();
         model.loadModel("building12.obj");
-        model.setPosition(ofGetWidth()/2, ofGetHeight()/2, 0.0f);
         ofLoadImage(myTexture, "test2.jpg");
         ofDisableArbTex();
         ofEnableDepthTest();

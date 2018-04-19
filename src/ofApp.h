@@ -47,6 +47,7 @@ class ofApp : public ofBaseApp{
     // load city building
     ofxAssimpModelLoader model;
     ofImage myTexture;
+    ofLight    light;
     
     int pressed = 0;
 };
