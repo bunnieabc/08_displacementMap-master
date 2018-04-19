@@ -1,5 +1,6 @@
 #include "ofApp.h"
 float pxs;
+
 //--------------------------------------------------------------
 void ofApp::setup(){
 
@@ -35,6 +36,8 @@ void ofApp::setup(){
     
     img2.allocate(320, 160, OF_IMAGE_COLOR);
     img2.update();
+    img3.allocate(320, 160, OF_IMAGE_COLOR);
+    img3.update();
     pxs = ofRandom(2,11);
     
     //FBO
@@ -58,23 +61,45 @@ void ofApp::setup(){
     ofDisableArbTex();
     ofSetDepthTest(false);
     
+    model.loadModel("2.dae");
+    model.setPosition(ofGetWidth() * 0.85, (float)ofGetHeight() * 0.60 , -100);
+    model.setScale(2, 2, 2);
+    model2.loadModel("city.obj");
+    model2.setPosition(ofGetWidth() * 0.35, (float)ofGetHeight() -200, -200);
+    model2.setScale(5,5,5);
+    light1.enable();
+    light1.setPosition(ofVec3f(-50,0,100));
+    light1.lookAt(ofVec3f(0,0,0));
 
-    model.loadModel("building12.obj",false);
-//    model.setPosition(ofGetWidth() * 0.5, (float)ofGetHeight() * 0.75 , 0);
-    ofLoadImage(myTexture, "test2.jpg");
+    light2.setDiffuseColor( ofFloatColor( 238.f/255.f, 57.f/255.f, 135.f/255.f ));
+    light2.setSpecularColor(ofFloatColor(.8f, .8f, .9f));
+
+    light3.setDiffuseColor( ofFloatColor(19.f/255.f,94.f/255.f,77.f/255.f) );
+    light3.setSpecularColor( ofFloatColor(18.f/255.f,150.f/255.f,135.f/255.f) );
+    
+    //---------Object Drawing
+    for (int i=0; i<NUM; i++) {
+        stars[i].setPosition(ofRandom(-500,500), ofRandom(-500,500), ofRandom(-500,500));
+        stars[i].set(ofRandom(0.1,0.5), 10);
+    };
+    
+    plane.set(800, 800, 80, 80);
+    plane.mapTexCoordsFromTexture(img.getTexture());
+    
+    //secondScene = 0;
 }
 
 //--------------------------------------------------------------
 void ofApp::update(){
     model.update();
-    
+    model2.update();
     float p = 0;
     float high = 0;
 //    float mappedScale;
     float mappedVel;
     for(int i = 0; i < bufferSize - 1; i+=2) {
         // p is incrementing left channel input based on bufferSize
-        cout<<left[i]<<"\n";
+
         p += left[i];
     }
 
@@ -133,7 +158,34 @@ void ofApp::update(){
     }
     img2.setFromPixels(pixels);
     img2.update();
+    
+    
+    for(int y=0; y<h; y++) {
+        for(int x=0; x<w; x++) {
+            int i = y * w + x;
+            float r = ofMap(x, 0, w, 0, 155);
+            float g = ofMap(y, 0, h, 0, 100);
+            float b = 200;
+            float a = 0.8;
+            ofColor c(r , g, b);
+            pixels.setColor(x,y, c);
+            
+        }
+    }
+    img3.setFromPixels(pixels);
+    img3.update();
 //    cout<<"?????"<<"\n";
+    
+    light2.setPosition((ofGetWidth()*.5)+ cos(ofGetElapsedTimef()*.15)*(ofGetWidth()*.3),
+                       ofGetHeight()*.5 + sin(ofGetElapsedTimef()*.7)*(ofGetHeight()), -300);
+
+    light3.setPosition( cos(ofGetElapsedTimef()*1.5) * ofGetWidth()*.5,
+                       sin(ofGetElapsedTimef()*1.5f) * ofGetWidth()*.5,
+                       cos(ofGetElapsedTimef()*.2) * ofGetWidth()
+                       );
+    
+    //secondScene_start = ofGetElapsedTimef();
+    secondScene_time = ofGetElapsedTimef() - secondScene_start;
     
 }
 
@@ -164,6 +216,11 @@ void ofApp::draw(){
     
     ofPushMatrix();
     
+
+
+    
+    
+    
     // translate plane into center screen.
     float tx = ofGetWidth() / 2;
     float ty = ofGetHeight() / 2;
@@ -176,48 +233,18 @@ void ofApp::draw(){
     ofRotateY(360 * sinf(float(ofGetFrameNum())/500.0f));
     ofRotate(-90,1,0,0);
 
+    
+    
+    
     sphere.draw(ofPolyRenderMode::OF_MESH_FILL);
     sphere.drawWireframe();
     ofPopMatrix();
     
     shader.end();
     fboBlurOnePass.end();
-    //ofSetColor(ofColor::white);
-    //img.draw(0, 0);
-    //ofPushStyle();
-    ofSetColor(ofColor::white);
-    //ofDrawRectangle(0, 0, 0, ofGetWidth(), ofGetHeight());
-    //ofPopStyle();
-    //fboBlurOnePass.draw(0,0);
+
     
-    
-    //////////////// Gaussian Shader ////////////////
-    /*
-    fboBlurTwoPass.begin();
-    {
-        ofClear(0,0,0,0);
-    }
-    fboBlurTwoPass.end();
-    fboBlurTwoPass.begin();
-    
-    shaderGaussian.begin();
-    shaderGaussian.setUniformTexture("screenshot", fboBlurOnePass.getTexture(), 2);
-    shaderGaussian.setUniform3f("resolution", (float)ofGetWidth(), (float)ofGetHeight(), 0.0);
-    shaderGaussian.setUniform1f("u_sigma", 100);
-    shaderGaussian.setUniform1f("u_width", (float)ofGetWidth()/30);
-    //shaderBlurX.setUniform1f("iTime", ofGetElapsedTimef());
-    //shaderBlurX.setUniform2f("iResolution", (float)ofGetWidth(), (float)ofGetHeight());
-    //shaderGaussian.setUniform1f("blurAmnt", blur);
-    
-    fboBlurOnePass.draw(0, 0);
-    shaderGaussian.end();
-    fboBlurTwoPass.end();
-    
-    fboBlurTwoPass.draw(0, 0);
-    */
-    
-    
-    
+
     //////////////// Second Shader /////////////////
     fboBlurTwoPass.begin();
     {
@@ -271,54 +298,85 @@ void ofApp::draw(){
     
     
     //----------------------------------------------------------
-    /*
-    fbo4.begin();
-    {
-        ofClear(0,0,0,0);
-    }
-    fbo4.end();
     
-    fbo4.begin();*/
-    
+    //---------Star Drawing
+
     if(pressed ==1){
+        
+        
+//        ofPushMatrix();
+//        ofTranslate(ofGetWidth()/2, ofGetHeight()/2);
+//        ofRotateY(ofGetElapsedTimef() / 5);
+//        for (int i=0; i< NUM; i++) {
+//            ofSetColor(ofRandom(100,255),ofRandom(100,255),ofRandom(100,255));
+//            stars[i].draw();
+//        }
+//        ofPopMatrix();
+        
+        
+        
         ofEnableBlendMode(OF_BLENDMODE_ALPHA);
         ofEnableDepthTest();
-        
         light.enable();
         ofEnableSeparateSpecularLight();
+        ofTranslate(0, 0, ofGetElapsedTimef() * 10 * secondScene_time);
+        ofRotate(sin(secondScene_time)*15);
 
-        shader.begin();
+
+        //shader2.begin();
         ofSetColor(255);
-        ofBackground(255, 255, 255);
+        ofBackground(180, 180, 200);
         
+
         fboBlurOnePass.clear();
         fboBlurTwoPass.clear();
         fboBlurThreePass.clear();
         //ofTranslate(ofGetMouseX(), ofGetMouseY());
-        shader.setUniformTexture("colormap", img2, 2);
-        shader.setUniform1f("maxHeight", mouseX);
-        
+        //shader2.setUniformTexture("colormap", img2, 2);
+        //shader2.setUniform1f("maxHeight", mouseX);
+        ofColor materialColor = ofColor::red;
+        shader2.setUniform4f("uMaterialColor", ofColor(materialColor));
         ofPushMatrix();
-        ofTranslate(mouseX,mouseY);
-        model.drawFaces();
+//        ofTranslate(mouseX,mouseY);
+//        plane.draw(ofPolyRenderMode::OF_MESH_FILL);
+        model.drawWireframe();
+        model2.drawWireframe();
         ofPopMatrix();
-
+        
         //model.draw(ofPolyRenderMode::OF_MESH_FILL);
         ofDisableDepthTest();
-//        model.drawWireframe();
-        shader.end();
+        //        model.drawWireframe();
+        //shader2.end();
         //fbo4.end();
-        
-        
+
         
         //fbo4.clear();
+        
+        shader.begin();
+        
+        ofPushMatrix();
+        
+        // translate plane into center screen.
+        float tx = ofGetWidth() / 2;
+        float ty = ofGetHeight() / 2;
+        ofTranslate(tx, ty+150);
+        
+        // the mouse/touch Y position changes the rotation of the plane.
+        float percentY = mouseY / (float)ofGetHeight();
+        float rotation = ofMap(percentY, 0, 1, -60, 60, true) + 60;
+        ofRotate(90, 1, 0, 0);
+        shader.setUniformTexture("colormap", img3, 3);
+        //shader.setUniformTexture("colormap", img2, 2);
+        shader.setUniform1f("maxHeight", mouseX);
+        plane.drawWireframe();
+        ofPopMatrix();
+        
+
+        light.setAmbientColor(ofFloatColor::red);
+        light.setAmbientColor(ofFloatColor::blue);
+
+        shader.end();
     }
-    
-    //----------------------------------------------------------
-    
-    
-    
-    
 }
 
 
@@ -337,17 +395,11 @@ void ofApp::audioIn( float * input, int bufferSize, int nChannels ){
 //--------------------------------------------------------------
 void ofApp::keyPressed(int key){
     if(key=='a'){
-        ofSetFrameRate(60);
-        ofSetVerticalSync(true);
-        ofSetDepthTest(true);
-//        model.enableColors();
-//        model.enableTextures();
-//        model.enableTextures();
-        model.loadModel("building12.obj");
         ofLoadImage(myTexture, "test2.jpg");
-        ofDisableArbTex();
         ofEnableDepthTest();
         pressed = 1;
+        secondScene_start = ofGetElapsedTimef();
+        //secondScene_time = ofGetElapsedTimef() - secondScene_start;
     }
 }
 

@@ -2,6 +2,7 @@
 
 #include "ofMain.h"
 #include "ofxAssimpModelLoader.h"
+#define NUM 50
 
 class ofApp : public ofBaseApp{
 	public:
@@ -24,10 +25,10 @@ class ofApp : public ofBaseApp{
     ofFbo fboBlurOnePass;
     ofFbo fboBlurTwoPass;
     ofFbo fboBlurThreePass;
-    ofFbo fbo4;
-    //ofPlanePrimitive plane;
+    ofFbo fbo4, fbo5, fbo6;
+    ofPlanePrimitive plane;
     ofSpherePrimitive sphere;
-    ofImage img, img2;
+    ofImage img, img2, img3;
     ofImage bumpmap;
     GLUquadricObj *quadric;
     int first = 0;
@@ -46,8 +47,18 @@ class ofApp : public ofBaseApp{
     
     // load city building
     ofxAssimpModelLoader model;
+    ofxAssimpModelLoader model2;
     ofImage myTexture;
     ofLight    light;
+    ofLight light1;
+    ofLight light2;
+    ofLight light3;
+    ofMesh mesh;
+    
+    ofSpherePrimitive stars[NUM];
     
     int pressed = 0;
+    float secondScene_time;
+    float secondScene_start;
+    
 };
